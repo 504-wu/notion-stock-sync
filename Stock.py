@@ -3,7 +3,6 @@ import sys
 import requests
 import yfinance as yf
 from datetime import datetime 
-
 # ==================
 # 1. 基礎設定
 # ==================
