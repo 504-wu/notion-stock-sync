@@ -2,8 +2,8 @@ name: Auto Update Notion Stock Metrics
 
 on:
   schedule:
-    # 設定每天台灣時間下午 16:30 自動執行
-    - cron: '30 08 * * *'
+    # 設定每天台灣時間 08:30 自動執行
+    - cron: '30 00 * * *'
   workflow_dispatch: # 隨時可以手動按按鈕強制執行
 
 jobs:
