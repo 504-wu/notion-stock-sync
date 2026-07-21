@@ -357,63 +357,63 @@ if __name__ == "__main__":
     else:
         print("\n💡 提示：若直接按 Enter 鍵，程式將切換為「排程自動模式」，一鍵更新現有資料庫所有股票。")
         print("=== 請輸入要「新增/建立」的股票與股數（輸入 q 或直接 Enter 進入全自動更新模式） ===")
-    
-    manual_mode = False
-    while True:
-        symbol = input("輸入股票代號 (例如 2330.TW 或 AAPL): ").strip()
-        if symbol.lower() in ['q', 'quit', '']:
-            break
+        manual_mode = False
+        
+        while True:
+            symbol = input("輸入股票代號 (例如 2330.TW 或 AAPL): ").strip()
+            if symbol.lower() in ['q', 'quit', '']:
+                break
 
          # 輸入的是數字，自動幫補上.TW
-        if symbol.isdigit():
-            symbol = f"{symbol}.TW"
-            print(f"🔹 找尋台股標的，已自動轉換為: {symbol}")
+            if symbol.isdigit():
+                symbol = f"{symbol}.TW"
+                print(f"🔹 找尋台股標的，已自動轉換為: {symbol}")
 
-        manual_mode = True  # 手動輸入建立資料庫模式
-        print(f"正在確認 Notion 資料庫中是否已有 {symbol}...")
-        existing_stock = query_notion_stock(symbol)
+            manual_mode = True  # 手動輸入建立資料庫模式
+            print(f"正在確認 Notion 資料庫中是否已有 {symbol}...")
+            existing_stock = query_notion_stock(symbol)
         
-        if existing_stock:
-            page_id = existing_stock["page_id"]
-            base_shares = existing_stock["current_shares"]
-            print(f"💡 偵測到既有股票！目前 Notion 中的庫存股數為: {base_shares} 股")
-            prompt_text = f" └─ 請輸入異動股數 (例如 +200、-500 或直接按 Enter 保持不變): "
-        else:
-            page_id = None
-            base_shares = 0
-            print(f"✨ 發現全新股票！")
-            prompt_text = f" └─ 請輸入此新股的初始購買股數 (例如 1000): "
+            if existing_stock:
+                page_id = existing_stock["page_id"]
+                base_shares = existing_stock["current_shares"]
+                print(f"💡 偵測到既有股票！目前 Notion 中的庫存股數為: {base_shares} 股")
+                prompt_text = f" └─ 請輸入異動股數 (例如 +200、-500 或直接按 Enter 保持不變): "
+            else:
+                page_id = None
+                base_shares = 0
+                print(f"✨ 發現全新股票！")
+                prompt_text = f" └─ 請輸入此新股的初始購買股數 (例如 1000): "
 
-        while True:
-            shares_input = input(prompt_text).strip()
+            while True:
+                shares_input = input(prompt_text).strip()
             
-            # 使用者直接按 Enter
-            if not shares_input:
-                if page_id:
-                    # 既有股票：沿用原本的股數不變動
-                    shares = base_shares
-                    print(f"    ℹ️ 股數保持不變：{shares} 股")
-                    break
-                else:
-                    # 新股票：不允許按 Enter，必須輸入初始股數
-                    print("⚠️ 新股票必須輸入初始購買股數！")
-                    continue
-                    
-            try:
-                # 判斷是否為加減號開頭
-                is_plus = shares_input.startswith('+')
-                is_minus = shares_input.startswith('-')
-                
-                # 移除非數字轉換為整數
-                clean_input = shares_input.replace('+', '').replace('-', '').strip()
-                val = int(clean_input)
-                
-                if is_minus:
-                    shares = base_shares - val
-                elif is_plus:
-                    shares = base_shares + val
-                else:
+                # 使用者直接按 Enter
+                if not shares_input:
                     if page_id:
+                        # 既有股票：沿用原本的股數不變動
+                        shares = base_shares
+                        print(f"    ℹ️ 股數保持不變：{shares} 股")
+                        break
+                    else:
+                        # 新股票：不允許按 Enter，必須輸入初始股數
+                        print("⚠️ 新股票必須輸入初始購買股數！")
+                        continue
+                    
+                try:
+                    # 判斷是否為加減號開頭
+                    is_plus = shares_input.startswith('+')
+                    is_minus = shares_input.startswith('-')
+                
+                    # 移除非數字轉換為整數
+                    clean_input = shares_input.replace('+', '').replace('-', '').strip()
+                    val = int(clean_input)
+                
+                    if is_minus:
+                        shares = base_shares - val
+                    elif is_plus:
+                        shares = base_shares + val
+                    else:
+                        if page_id:
                         # 輸入沒帶正負號的數字，當作加碼 "+200"
                         shares = base_shares + val
                         print(f"    ℹ️ 未輸入正負號，系統自動判定為加碼 +{val} 股")
@@ -421,15 +421,15 @@ if __name__ == "__main__":
                         # 新股票如果輸入無正負號，直接當作初始值
                         shares = val
 
-                if shares < 0:
-                    print(f"⚠️ 錯誤：扣除後總股數不能小於 0！（目前 Notion 庫存僅有 {base_shares} 股，無法扣除 {val} 股）")
-                    continue
+                    if shares < 0:
+                        print(f"⚠️ 錯誤：扣除後總股數不能小於 0！（目前 Notion 庫存僅有 {base_shares} 股，無法扣除 {val} 股）")
+                        continue
 
-                print(f"📝 異動後最新總股數將會變更為: {shares} 股")
-                break  # 成功輸入且計算完股數跳出
+                    print(f"📝 異動後最新總股數將會變更為: {shares} 股")
+                    break  # 成功輸入且計算完股數跳出
                 
-            except ValueError:
-                print("⚠️ 格式錯誤：請輸入正確的數字格式（如 +200、-100 或 500）。")
+                except ValueError:
+                    print("⚠️ 格式錯誤：請輸入正確的數字格式（如 +200、-100 或 500）。")
 
         # 輸入完股數後，程式把資料填入並同步！
         portfolio.append({
