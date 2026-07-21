@@ -1,11 +1,13 @@
 import os
 import sys
+from dotenv import load_dotenv
 import requests
 import yfinance as yf
 from datetime import datetime 
 # ==================
 # 1. 基礎設定
 # ==================
+load_dotenv()
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 DATABASE_ID = os.getenv("DATABASE_ID")
 
@@ -125,14 +127,24 @@ def fetch_all_notion_stocks() -> list:
                 page_id = page["id"]
                 props = page.get("properties", {})
                 
-                # 抓取股票代號
                 title_list = props.get("名稱", {}).get("title", [])
                 if not title_list:
                     continue
-                symbol = title_list[0].get("text", {}).get("content", "").strip()
-                if not symbol:
+                raw_title = title_list[0].get("text", {}).get("content", "").strip()
+                if not raw_title:
                     continue
-                
+
+                # 解析個股
+                # 股票格式為 "台積電 (2330.TW)" ->  "2330.TW"
+                if "(" in raw_title and raw_title.endswith(")"):
+                    symbol = raw_title.split("(")[-1].replace(")", "").strip()
+                else:
+                    # 在 Notion 新增輸入的純代號，例如直接打 "2317" 或 "AAPL"
+                    symbol = raw_title
+                    # 如果使用者輸入純數字，自動幫他補上台股尾碼
+                    if symbol.isdigit():
+                        symbol = f"{symbol}.TW"
+                        
                 # 抓取購買股數
                 shares = props.get("購買股數", {}).get("number", 0)
                 shares = int(shares) if shares is not None else 0
@@ -265,20 +277,21 @@ def upload_to_notion(data: dict, page_id: str = None):
 
     # 1. 建立常用股票字典
     TAIWAN_STOCK_CODES = { 
-        "1101": "台泥", "1216": "統一", "1301": "台塑", "1303": "南亞", "1326": "台化", 
-        "1402": "遠東新", "1590": "亞德客-KY", "1605": "華新", "2002": "中鋼", "2207": "和泰車", 
-        "2301": "光寶科", "2303": "聯電", "2308": "台達電", "2317": "鴻海", "2327": "國巨", 
-        "2330": "台積電", "2337": "旺宏", "2345": "智邦", "2357": "華碩", "2379": "瑞昱", 
-        "2382": "廣達", "2395": "研華", "2408": "南亞科", "2412": "中華電", "2454": "聯發科", 
-        "2603": "長榮", "2609": "陽明", "2615": "萬海", "2880": "華南金", "2881": "富邦金", 
-        "2882": "國泰金", "2883": "開發金", "2884": "玉山金", "2885": "元大金", "2886": "兆豐金", 
-        "2887": "台新金", "2890": "永豐金", "2891": "中信金", "2892": "第一金", "2912": "統一超", 
-        "3008": "大立光", "3029": "零壹", "3034": "聯詠", "3037": "欣興", "3045": "台灣大", 
-        "3231": "緯創", "3653": "健策", "3711": "日月光投控", "4904": "遠傳", "4915": "致伸", 
-        "4938": "和碩", "5871": "中租-KY", "5876": "上海商銀", "5880": "合庫金", "6415": "矽力*-KY", 
-        "6669": "緯穎", "0050": "元大台灣50", "0056": "元大高股息", "006208": "富邦台50", 
-        "00878": "國泰永續高股息" 
+    "1101": "台泥", "1216": "統一", "1301": "台塑", "1303": "南亞", "1326": "台化", 
+    "1402": "遠東新", "1590": "亞德客-KY", "1605": "華新", "2002": "中鋼", "2207": "和泰車", 
+    "2301": "光寶科", "2303": "聯電", "2308": "台達電", "2317": "鴻海", "2327": "國巨", 
+    "2330": "台積電", "2337": "旺宏", "2345": "智邦", "2357": "華碩", "2379": "瑞昱", 
+    "2382": "廣達", "2395": "研華", "2408": "南亞科", "2412": "中華電", "2454": "聯發科", 
+    "2603": "長榮", "2609": "陽明", "2615": "萬海", "2880": "華南金", "2881": "富邦金", 
+    "2882": "國泰金", "2883": "開發金", "2884": "玉山金", "2885": "元大金", "2886": "兆豐金", 
+    "2887": "台新金", "2890": "永豐金", "2891": "中信金", "2892": "第一金", "2912": "統一超", 
+    "3008": "大立光", "3029": "零壹", "3034": "聯詠", "3037": "欣興", "3045": "台灣大", 
+    "3231": "緯創", "3653": "健策", "3711": "日月光投控", "4904": "遠傳", "4915": "致伸", 
+    "4938": "和碩", "5871": "中租-KY", "5876": "上海商銀", "5880": "合庫金", "6415": "矽力*-KY", 
+    "6669": "緯穎", "0050": "元大台灣50", "0056": "元大高股息", "006208": "富邦台50", 
+    "00878": "國泰永續高股息" 
 }
+
 
     try:
             symbol = data.get("symbol", "")
@@ -293,13 +306,13 @@ def upload_to_notion(data: dict, page_id: str = None):
         # 查表與命名
     if short_symbol in TAIWAN_STOCK_CODES:
         stock_name = TAIWAN_STOCK_CODES[short_symbol]
-        formatted_name = f"TW {stock_name} ({symbol})"
+        formatted_name = f"{stock_name} ({symbol})"
     else:
         # 美股或不在表裡的標的，保持原本格式
         if is_taiwan_stock:
-            formatted_name = f"TW {display_name}"
+            formatted_name = f"{display_name}"
         else:
-            formatted_name = f"US {display_name} ({symbol})"
+            formatted_name = f"{display_name} ({symbol})"
 
 
     properties = {
@@ -454,4 +467,3 @@ if __name__ == "__main__":
                 upload_to_notion(stock_data, page_id=item["page_id"])
                 
         print("\n🎉 全數同步完畢！請打開您的 Notion 查看資料庫。")
-
