@@ -364,7 +364,7 @@ if __name__ == "__main__":
             if symbol.lower() in ['q', 'quit', '']:
                 break
 
-         # 輸入的是數字，自動幫補上.TW
+            # 輸入的是數字，自動幫補上.TW
             if symbol.isdigit():
                 symbol = f"{symbol}.TW"
                 print(f"🔹 找尋台股標的，已自動轉換為: {symbol}")
@@ -414,12 +414,12 @@ if __name__ == "__main__":
                         shares = base_shares + val
                     else:
                         if page_id:
-                        # 輸入沒帶正負號的數字，當作加碼 "+200"
-                        shares = base_shares + val
-                        print(f"    ℹ️ 未輸入正負號，系統自動判定為加碼 +{val} 股")
-                    else:
-                        # 新股票如果輸入無正負號，直接當作初始值
-                        shares = val
+                            # 輸入沒帶正負號的數字，當作加碼 "+200"
+                            shares = base_shares + val
+                            print(f"    ℹ️ 未輸入正負號，系統自動判定為加碼 +{val} 股")
+                        else:
+                            # 新股票如果輸入無正負號，直接當作初始值
+                            shares = val
 
                     if shares < 0:
                         print(f"⚠️ 錯誤：扣除後總股數不能小於 0！（目前 Notion 庫存僅有 {base_shares} 股，無法扣除 {val} 股）")
@@ -431,26 +431,28 @@ if __name__ == "__main__":
                 except ValueError:
                     print("⚠️ 格式錯誤：請輸入正確的數字格式（如 +200、-100 或 500）。")
 
-        # 輸入完股數後，程式把資料填入並同步！
-        portfolio.append({
-            "symbol": symbol,
-            "shares": shares,
-            "page_id": page_id
-        })
-        print(f"🔄 已排入處理佇列：{symbol}\n")
+            # 將手動輸入的股票加入待處理佇列
+            portfolio.append({
+                "symbol": symbol,
+                "shares": shares,
+                "page_id": page_id
+            })
+            print(f"🚀 已加入待處理佇列: {symbol}\n")
 
-    if not manual_mode:
-        print("\n🤖 [啟動自動模式] 使用者未建立新股票，正在從 Notion資料庫，載入全部既有資料...")
-        portfolio = fetch_all_notion_stocks()
+        # 若使用者直接按 Enter 沒有手動輸入任何股票，則切換為自動更新模式
+        if not manual_mode:
+            print("\n🤖 [自動更新模式] 正在從 Notion 載入全部既有資料...")
+            portfolio = fetch_all_notion_stocks()
 
-    # 🚀 開始批次更新到 Notion
+    # 🚀 統一執行批次同步更新（這段在最外層，GitHub 雲端和本地手動都會執行到這裡）
     if not portfolio:
-        print("👋 資料庫中沒有任何股票標的可以處理，程式結束。")
+        print("👋 資料庫中沒有任何標的可以處理，程式結束。")
     else:
         print(f"\n=== 🔄 開始批次處理與同步這 {len(portfolio)} 檔標的 ===")
         for item in portfolio:
             stock_data = get_stock_data(item["symbol"], item["shares"], global_fx_rate)
             if stock_data:
                 upload_to_notion(stock_data, page_id=item["page_id"])
-        
-        print("\n🎉 全部標的同步完畢！請打開的 Notion 查看資料庫。")
+                
+        print("\n🎉 全數同步完畢！請打開您的 Notion 查看資料庫。")
+
