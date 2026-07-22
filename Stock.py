@@ -3,9 +3,13 @@ import sys
 import requests
 import yfinance as yf
 from datetime import datetime 
+from zoneinfo import ZoneInfo
+current_time = datetime.now(ZoneInfo("Asia/Taipei")).isoformat()
+
 # ==================
 # 1. 基礎設定
 # ==================
+
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 DATABASE_ID = os.getenv("DATABASE_ID")
 
