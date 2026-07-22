@@ -316,8 +316,11 @@ def upload_to_notion(data: dict, page_id: str = None):
         "購買股數": {"number": data.get("shares", 0)},
         "配息資訊": {"rich_text": [{"text": {"content": data.get("dividend_info", "暫無資料")}}]},
         "預估年領股利": {"number": round(data.get("annual_payout", 0), 2)},
-        "詳細資料連結":{ "files": [{"name": data.get("symbol", "查看行情"),"type": "external","external": {"url": google_url  # 實際的 Google Finance 長網址}}]}
+        "詳細資料連結":{ "files": [{"name": data.get("symbol", "查看行情"),"type": "external","external": {"url": google_url  # 實際的 Google Finance 長網址}
+                        }
+                    ]
                 }
+            }
                               
     if page_id:
         url = f"https://api.notion.com/v1/pages/{page_id}"
