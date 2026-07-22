@@ -2,9 +2,9 @@ import os
 import sys
 import requests
 import yfinance as yf
-from datetime import datetime, timedelta 
+from datetime import datetime, timedelta
 tw_time = datetime.utcnow() + timedelta(hours=8)
-current_time = tw_time.isoformat()
+current_time = tw_time.strftime("%Y-%m-%dT%H:%M:%S+08:00")
 
 # ==================
 # 1. 基礎設定
