@@ -2,9 +2,9 @@ import os
 import sys
 import requests
 import yfinance as yf
-from datetime import datetime 
-from zoneinfo import ZoneInfo
-current_time = datetime.now(ZoneInfo("Asia/Taipei")).isoformat()
+from datetime import datetime, timedelta 
+tw_time = datetime.utnow() + timedelta(hour=8)
+current_time = tw_time.isoformat()
 
 # ==================
 # 1. 基礎設定
