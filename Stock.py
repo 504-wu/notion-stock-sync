@@ -6,7 +6,6 @@ from datetime import datetime
 # ==================
 # 1. 基礎設定
 # ==================
-load_dotenv()
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 DATABASE_ID = os.getenv("DATABASE_ID")
 
