@@ -3,7 +3,7 @@ import sys
 import requests
 import yfinance as yf
 from datetime import datetime, timedelta 
-tw_time = datetime.utnow() + timedelta(hour=8)
+tw_time = datetime.utcnow() + timedelta(hours=8)
 current_time = tw_time.isoformat()
 
 # ==================
