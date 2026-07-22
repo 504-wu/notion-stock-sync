@@ -2,9 +2,10 @@ import os
 import sys
 import requests
 import yfinance as yf
-from datetime import datetime, timedelta
-tw_time = datetime.utcnow() + timedelta(hours=8)
-current_time = tw_time.strftime("%Y-%m-%dT%H:%M:%S+08:00")
+from datetime import datetime
+from zoneinfo import ZoneInfo
+current_time = datetime.now(ZoneInfo("Asia/Taipei")).isoformat()
+
 
 # ==================
 # 1. 基礎設定
@@ -322,7 +323,7 @@ def upload_to_notion(data: dict, page_id: str = None):
         "近月均價 ": {"number": round(data["avg_22d"], 2) if data.get("avg_22d") is not None else 0},
         "合理買入下限": {"number": round(data["lower_bound"], 2) if data.get("lower_bound") is not None else 0},
         "合理賣出上限": {"number": round(data["upper_bound"], 2) if data.get("upper_bound") is not None else 0},
-        "最後更新時間": {"date": {"start": data.get("update_time")}},  
+        "最後更新時間": {"date": {"start": current_time}},  
         "購買股數": {"number": data.get("shares", 0)},
         "配息資訊": {"rich_text": [{"text": {"content": data.get("dividend_info", "暫無資料")}}]},
         "預估年領股利": {"number": round(data.get("annual_payout", 0), 2)},
