@@ -1,6 +1,5 @@
 import os
 import sys
-from dotenv import load_dotenv
 import requests
 import yfinance as yf
 from datetime import datetime 
