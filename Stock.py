@@ -3,13 +3,15 @@ import sys
 import requests
 import yfinance as yf
 from datetime import datetime 
+
 # ==================
 # 1. 基礎設定
 # ==================
+
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 DATABASE_ID = os.getenv("DATABASE_ID")
 
-# 🤖 雲端找不到憑證，直接終止
+#  雲端找不到憑證，直接終止
 if not NOTION_TOKEN or not DATABASE_ID:
     print("❌ 錯誤：找不到環境變數 NOTION_TOKEN 或 DATABASE_ID！")
     print("💡 請確認您的 GitHub Secrets 已經正確設定。")
@@ -30,16 +32,9 @@ def delete_old_notion_records(database_id, headers):
     # 計算 365 天前的時間
     one_year_ago = (datetime.datetime.now() - datetime.timedelta(days=365)).isoformat()
     
-    # 2. 向 Notion 查詢超過 1 年未更新的資料
+    # 向 Notion 查詢超過 1 年未更新的資料
     query_url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
-    query_payload = {
-        "filter": {
-            "property": "最後更新時間", 
-            "date": {
-                "before": one_year_ago 
-            }
-        }
-    }
+    query_payload = {"filter": {"property": "最後更新時間", "date": {"before": one_year_ago }}}
     
     try:
         response = requests.post(query_url, json=query_payload, headers=headers)
@@ -70,7 +65,7 @@ def delete_old_notion_records(database_id, headers):
         print(f"❌ 執行自動清理時發生未預期的錯誤: {e}")
 
 def get_usdtwd_rate() -> float:
-    """🎯 核心升級：抓取即時美金兌台幣匯率，並附帶安全防錯機制"""
+    """抓取即時美金兌台幣匯率(保有除錯)"""
     try:
         fx = yf.Ticker("USDTWD=X")
         fx_hist = fx.history(period="1d")
@@ -85,14 +80,8 @@ def get_usdtwd_rate() -> float:
 def query_notion_stock(symbol: str) -> dict:
     """檢查 Notion 中是否已有該股票。有就回傳 page_id 資訊，沒有就回傳 None"""
     url = f"https://api.notion.com/v1/databases/{DATABASE_ID}/query"
-    payload = {
-        "filter": {
-            "property": "名稱",
-            "title": {
-                "equals": symbol
-            }
-        }
-    }
+    payload = { "filter": {"property": "名稱","title": {"equals": symbol}}}
+    
     try:
         response = requests.post(url, headers=HEADERS, json=payload)
         if response.status_code == 200:
@@ -108,7 +97,7 @@ def query_notion_stock(symbol: str) -> dict:
                 return {
                     "page_id": page["id"],
                     "current_shares": current_shares
-                }
+                        }
     except Exception as e:
         print(f"⚠️ 查詢 Notion 發生錯誤: {e}")
     return None
@@ -137,9 +126,9 @@ def fetch_all_notion_stocks() -> list:
                 if "(" in raw_title and raw_title.endswith(")"):
                     symbol = raw_title.split("(")[-1].replace(")", "").strip()
                 else:
-                    # 在 Notion 新增輸入的純代號，例如直接打 "2317" 或 "AAPL"
+                    # 在 Notion 輸入的新代號，直接打 "2317" 或 "AAPL"
                     symbol = raw_title
-                    # 如果使用者輸入純數字，自動幫他補上台股尾碼
+                    # 輸入純數字，自動補上台股尾碼
                     if symbol.isdigit():
                         symbol = f"{symbol}.TW"
                         
@@ -148,17 +137,17 @@ def fetch_all_notion_stocks() -> list:
                 shares = int(shares) if shares is not None else 0
                 
                 portfolio.append({
-                    "symbol": symbol,
-                    "shares": shares,
-                    "page_id": page_id
-                })
+                        "symbol": symbol,
+                        "shares": shares,
+                        "page_id": page_id
+                                 })
             return portfolio
     except Exception as e:
         print(f"❌ 自動讀取 Notion 發生錯誤: {e}")
     return portfolio
 
 def get_stock_data(symbol: str, shares: int, fx_rate: float) -> dict:
-    """透過 yfinance 抓取即時數據、月波動區間、配息並自動產生時間戳記"""
+    """透過 yf 抓取即時數據、月波動區間、配息並自動產生時間戳記"""
     print(f"🔍 正在抓取 {symbol} 的數據...")
     try:
         stock = yf.Ticker(symbol)
@@ -174,7 +163,6 @@ def get_stock_data(symbol: str, shares: int, fx_rate: float) -> dict:
             
         lower_bound = avg_22d - (1.5 * std_22d)
         upper_bound = avg_22d + (1.5 * std_22d)
-        
         if lower_bound >= current_price or upper_bound <= current_price or std_22d == 0:
             lower_bound = avg_22d * 0.95
             upper_bound = avg_22d * 1.05
@@ -193,7 +181,8 @@ def get_stock_data(symbol: str, shares: int, fx_rate: float) -> dict:
         upper_bound *= current_multiplier
         
         latest_dividend_twd = 0.0
-        frequency = 1    
+        frequency = 1   
+        
         # 配息換算
         dividend_info_str = "暫無配息資料"
         actions = stock.actions
@@ -225,7 +214,7 @@ def get_stock_data(symbol: str, shares: int, fx_rate: float) -> dict:
             except:
                     frequency = 1
                 
-            #計算公式：預估年領股利 = 單次配息(台幣) * 年化配息頻率 * 目前持有股數
+        #計算公式：預估年領股利 = 單次配息(台幣) * 年化配息頻率 * 目前持有股數
         estimated_annual_payout_twd = latest_dividend_twd * frequency * shares
 
         # 改成台灣時間（UTC+8）
@@ -241,7 +230,7 @@ def get_stock_data(symbol: str, shares: int, fx_rate: float) -> dict:
             "dividend_info": dividend_info_str,
             "annual_payout": estimated_annual_payout_twd,
             "update_time": update_time_str
-                    }
+                }
     except Exception as e:
         print(f"❌ 抓取 {symbol} 失敗: {e}")
     return None
@@ -258,11 +247,15 @@ def upload_to_notion(data: dict, page_id: str = None):
         stock = yf.Ticker(symbol)
         exchange = stock.info.get("exchange", "")    
         exchange_mapping = {
-            "NMS": "NASDAQ",   # 納斯達克
-            "NYQ": "NYSE",     # 紐約證券交易所
-            "ASE": "NYSEAMEX", # 美國證券交易所
-            "PCX": "NYSEARCA"  # 太平洋證券交易所
-        }
+                # 納斯達克
+                "NMS": "NASDAQ", 
+                # 紐約證券交易所
+                "NYQ": "NYSE",  
+                # 美國證券交易所
+                "ASE": "NYSEAMEX",
+                # 太平洋證券交易所
+                "PCX": "NYSEARCA"  
+                            }
         # 在對照表內就轉換，不在就維持原本的 exchange 名稱
         google_exchange = exchange_mapping.get(exchange, exchange)
 
@@ -273,7 +266,7 @@ def upload_to_notion(data: dict, page_id: str = None):
 
     google_url = f"https://google.com/finance/beta/quote/{google_symbol}?hl=zh-TW"
 
-    # 1. 建立常用股票字典
+    # 台股表(可自行新增)
     TAIWAN_STOCK_CODES = { 
     "1101": "台泥", "1216": "統一", "1301": "台塑", "1303": "南亞", "1326": "台化", 
     "1402": "遠東新", "1590": "亞德客-KY", "1605": "華新", "2002": "中鋼", "2207": "和泰車", 
@@ -301,7 +294,7 @@ def upload_to_notion(data: dict, page_id: str = None):
     short_symbol = str(symbol.split('.')[0]).strip()
     is_taiwan_stock = '.TW' in symbol or short_symbol.isdigit() 
 
-        # 查表與命名
+    # 查表與命名
     if short_symbol in TAIWAN_STOCK_CODES:
         stock_name = TAIWAN_STOCK_CODES[short_symbol]
         formatted_name = f"{stock_name} ({symbol})"
@@ -323,12 +316,9 @@ def upload_to_notion(data: dict, page_id: str = None):
         "購買股數": {"number": data.get("shares", 0)},
         "配息資訊": {"rich_text": [{"text": {"content": data.get("dividend_info", "暫無資料")}}]},
         "預估年領股利": {"number": round(data.get("annual_payout", 0), 2)},
-        "詳細資料連結":{ "files": [{"name": data.get("symbol", "查看行情"),"type": "external","external": {"url": google_url  # 實際的 Google Finance 長網址
-            }
-        }   
-    ]
-}
-}
+        "詳細資料連結":{ "files": [{"name": data.get("symbol", "查看行情"),"type": "external","external": {"url": google_url  # 實際的 Google Finance 長網址}}]}
+                }
+                              
     if page_id:
         url = f"https://api.notion.com/v1/pages/{page_id}"
         payload = {"properties": properties}
@@ -339,7 +329,7 @@ def upload_to_notion(data: dict, page_id: str = None):
         payload = {
             "parent": {"database_id": DATABASE_ID},
             "properties": properties
-        }
+                    }
         response = requests.post(url, headers=HEADERS, json=payload)
         action_text = "全新建立"
 
@@ -352,13 +342,14 @@ def upload_to_notion(data: dict, page_id: str = None):
 # ==================
 # 3. 主程式流程
 # ==================
+
 if __name__ == "__main__":
     print(f"\n=== 📈 新手投資盤前助手 ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')}) ===")
     
     # 先讀取即時美金匯率，若抓不到則會自動變回原幣別，確保主程式順利
     global_fx_rate = get_usdtwd_rate()
     portfolio = []
-    # 🤖 是否在 GitHub 雲端執行
+    # 是否在 GitHub 雲端執行
     IS_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
     if IS_GITHUB_ACTIONS:
@@ -374,7 +365,7 @@ if __name__ == "__main__":
             if symbol.lower() in ['q', 'quit', '']:
                 break
 
-            # 輸入的是數字，自動幫補上.TW
+            # 輸入的是數字，就會自動補上.TW
             if symbol.isdigit():
                 symbol = f"{symbol}.TW"
                 print(f"🔹 找尋台股標的，已自動轉換為: {symbol}")
@@ -436,17 +427,19 @@ if __name__ == "__main__":
                         continue
 
                     print(f"📝 異動後最新總股數將會變更為: {shares} 股")
-                    break  # 成功輸入且計算完股數跳出
+                    # 成功輸入且計算完股數跳出
+                    break  
+                    
                 
                 except ValueError:
                     print("⚠️ 格式錯誤：請輸入正確的數字格式（如 +200、-100 或 500）。")
 
             # 將手動輸入的股票加入待處理佇列
             portfolio.append({
-                "symbol": symbol,
-                "shares": shares,
-                "page_id": page_id
-            })
+                        "symbol": symbol,
+                        "shares": shares,
+                        "page_id": page_id
+                            })
             print(f"🚀 已加入待處理佇列: {symbol}\n")
 
         # 若使用者直接按 Enter 沒有手動輸入任何股票，則切換為自動更新模式
@@ -454,7 +447,7 @@ if __name__ == "__main__":
             print("\n🤖 [自動更新模式] 正在從 Notion 載入全部既有資料...")
             portfolio = fetch_all_notion_stocks()
 
-    # 🚀 統一執行批次同步更新（這段在最外層，GitHub 雲端和本地手動都會執行到這裡）
+    # 統一執行並同步更新（這段在最外層，GitHub 雲端和本地手動都會執行到這裡）
     if not portfolio:
         print("👋 資料庫中沒有任何標的可以處理，程式結束。")
     else:
