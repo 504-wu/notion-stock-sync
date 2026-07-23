@@ -2,7 +2,7 @@ name: Auto Update Notion Stock Metrics
 
 on:
   schedule:
-    # 設定每天台灣時間早上 05:48 到 09:00 之間(每 4 小時的 48 分)
+    # 設定每天台灣時間早上 05:48 到 09:00 之間(每 4 小時 48 分)
     - cron: '48 */4 * * *'
   workflow_dispatch: # 隨時可以手動按按鈕強制執行
 
