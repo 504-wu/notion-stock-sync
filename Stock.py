@@ -73,7 +73,7 @@ def delete_old_notion_records(database_id, headers):
         print(f"❌ 執行自動清理時發生未預期的錯誤: {e}")
 
 def get_usdtwd_rate() -> float:
-    """🎯 核心升級：抓取即時美金兌台幣匯率，並附帶安全防錯機制"""
+    """抓取即時美金兌台幣匯率，並附帶安全防錯機制"""
     try:
         fx = yf.Ticker("USDTWD=X")
         fx_hist = fx.history(period="1d")
