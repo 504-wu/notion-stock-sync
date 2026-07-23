@@ -142,7 +142,7 @@ def fetch_all_notion_stocks() -> list:
                     # 在 Notion 新增代號，直接打 "2317" 或 "AAPL"
                     symbol = raw_title
                     # 輸入純數字，自動補上台股尾碼
-                    if symbol.isdigit():
+                    if symbol and symbol[0].isdigit() and not symbol.endswith(".TW") and not symbol.endswith(".TWO"):
                         symbol = f"{symbol}.TW"
                         
                 # 抓取購買股數
