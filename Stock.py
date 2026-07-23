@@ -213,8 +213,8 @@ def get_stock_data(symbol: str, shares: int, fx_rate: float) -> dict:
                 latest_dividend_twd = latest_dividend * current_multiplier
                 dividend_date_str = latest_action_time.strftime("%m/%d")
                 
-                # 直接顯示TWD(預設季配息)
-                dividend_info_str = f"{round(latest_dividend_twd, 2)} TWD ({dividend_date_str})"
+                # 不顯示TWD(如果是國外股，已經有換算了)
+                dividend_info_str = f"{round(latest_dividend_twd, 2)} ({dividend_date_str})"
         if not is_taiwan_stock:
                     frequency = 4  
         else:
