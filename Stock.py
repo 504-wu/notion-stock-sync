@@ -231,7 +231,8 @@ def get_stock_data(symbol: str, shares: int, fx_rate: float) -> dict:
         estimated_annual_payout_twd = latest_dividend_twd * frequency * shares
 
         # 改成台灣時間（UTC+8）
-        update_time_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+        taipei_time = datetime.now(ZoneInfo("Asia/Taipei"))
+        update_time_str = taipei_time.strftime("%Y-%m-%d %H:%M")
         
         return {
             "symbol": symbol,
