@@ -4,8 +4,6 @@ import requests
 import yfinance as yf
 from datetime import datetime
 from zoneinfo import ZoneInfo
-current_time = datetime.now(ZoneInfo("Asia/Taipei")).isoformat()
-
 
 # ==================
 # 1. 基礎設定
@@ -233,7 +231,7 @@ def get_stock_data(symbol: str, shares: int, fx_rate: float) -> dict:
         estimated_annual_payout_twd = latest_dividend_twd * frequency * shares
 
         # 改成台灣時間（UTC+8）
-        update_time_str = datetime.now().strftime("%Y-%m-%dT%H:%M:00+08:00")
+        update_time_str = datetime.now().strftime("%Y-%m-%d %H:%M")
         
         return {
             "symbol": symbol,
@@ -323,7 +321,7 @@ def upload_to_notion(data: dict, page_id: str = None):
         "近月均價 ": {"number": round(data["avg_22d"], 2) if data.get("avg_22d") is not None else 0},
         "合理買入下限": {"number": round(data["lower_bound"], 2) if data.get("lower_bound") is not None else 0},
         "合理賣出上限": {"number": round(data["upper_bound"], 2) if data.get("upper_bound") is not None else 0},
-        "最後更新時間": {"date": {"start": current_time}},  
+        "最後更新時間": {"rich_text": [{"text": {"content": data.get("update_time")}}]},  
         "購買股數": {"number": data.get("shares", 0)},
         "配息資訊": {"rich_text": [{"text": {"content": data.get("dividend_info", "暫無資料")}}]},
         "預估年領股利": {"number": round(data.get("annual_payout", 0), 2)},
