@@ -9,7 +9,7 @@ on:
     # 台灣時間 08:27 (UTC 00:27) -> 台股開盤前 30 分鐘
     - cron: '27 0 * * *'
     
-  workflow_dispatch: # 隨時可以手動按按鈕強制執行
+  workflow_dispatch: # 手動按按鈕強制執行
 
 jobs:
   update-stock:
@@ -33,5 +33,5 @@ jobs:
       env:
         NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         DATABASE_ID: ${{ secrets.DATABASE_ID }}
-      # 精確對齊你在電腦與網頁上的 Stock.py 檔名
+  
       run: python Stock.py
