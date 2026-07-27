@@ -15,4 +15,4 @@
 
 # 專案結構
 - `.github/workflows/notion_sync.yml` : GitHub Actions 雲端排程自動化設定檔
-- `Stock.py` : 核心金融數據抓取、演算法計算與 Notion API 動態對齊主程式
+- `Stock.py` : 金融數據抓取、演算法計算與 Notion API 動態對齊主程式
