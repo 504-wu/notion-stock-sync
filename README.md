@@ -14,8 +14,8 @@
 - Notion API
 
 # 專案結構
-- `.github/workflows/notion_sync.yml` : GitHub Actions 雲端排程自動化設定檔
-- `Stock.py` : 金融數據抓取、演算法計算與 Notion API 動態對齊主程式
+- github/workflows/notion_sync.yml` : GitHub Actions 雲端排程自動化設定檔
+- Stock.py` : 金融數據抓取、演算法計算與 Notion API 動態對齊主程式
 
 # 執行成果
 <img width="1391" height="291" alt="stock" src="https://github.com/user-attachments/assets/9f2011a2-f21b-42b3-836d-395bece0a810" />
