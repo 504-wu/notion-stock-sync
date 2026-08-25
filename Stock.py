@@ -2,7 +2,7 @@ import os
 import sys 
 import requests
 import yfinance as yf
-from datetime import datetime
+from datetime import datetime 
 from zoneinfo import ZoneInfo
 
 # ==================
